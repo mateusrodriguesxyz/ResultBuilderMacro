@@ -1,59 +1,96 @@
 import ResultBuilderMacro
 
-enum StringBuilder: ResultBuilder {
-    
-    public static func buildBlock(_ components: String...) -> String {
-        return components.joined(separator: ",")
-    }
-    
-    public static func buildExpression(_ expression: Int) -> String {
-        return "\(expression)"
-    }
-    
-    public static func buildOptional(_ component: String?) -> String {
-        component ?? ""
-    }
-    
-    public static func buildEither(first component: String) -> String {
-        return component
-    }
-    
-    public static func buildEither(second component: String) -> String {
-        return component
-    }
-    
-    public static func buildArray(_ components: [String]) -> String {
-        return components.joined(separator: ",")
-    }
-    
-    public static func buildFinalResult(_ component: String) -> String {
-        return "RESULT = \(component)"
+enum E {
+    case c1
+    case c2
+    case c3(Int)
+}
+
+extension E {
+    static func random() -> E {
+        return [.c1, .c2, .c3(Int.random(in: 1...10))].randomElement()!
     }
 }
 
-@ResultBuilder<StringBuilder>
-func body() -> String {
-    "a"
-    "b"
-    "c"
-    if Bool.random() {
-        "true"
-    } else {
-        "false"
+
+
+//@_ResuiltBuilder<String>(
+//    "buildVirtualFor",
+//    "buildVirtualIf",
+//    "buildVirtualSwitch",
+//    "buildFinalResult"
+//)
+//func transform() -> String {
+//    let a = 5
+//    "A"
+//    "B"
+//    "C"
+//    if Bool.random() {
+//        "then"
+//    } else {
+//        "else"
+//    }
+//    if false {
+//        "then"
+//    }
+//    let x: Int? = 0
+//    let y: Int? = 0
+//    if let x, let y {
+//        "(\(x),\(y))"
+//    }
+//    for i in 1...10 where i.isMultiple(of: 2) {
+//        "\(i)"
+//    }
+//    switch Int.random(in: 1...5) {
+//        case 1:
+//            "1"
+//        case 2:
+//            "2"
+//        default:
+//            "3...5"
+//    }
+//    switch E.random() {
+//        case .c1:
+//            "CASE 1"
+//        case .c2:
+//            "CASE 2"
+//        case .c3(let value):
+//            // NOT WORKING WITH `buildEither`
+//            "CASE 3 = \(value)"
+//    }
+//}
+
+
+func aaa() {
+    
+    let x: Int? = 0
+    let y: Int? = 0
+    
+    func eval<T>(block: () -> T?) -> T? {
+        block()
     }
-    switch Int.random(in: 1...5) {
-    case 1:
-        "one"
-    case 2:
-        "two"
-    case 3:
-        "three"
-    default:
-        "default"
+    
+    let _value = eval {
+        if Bool.random(), let x, let y  {
+            (x, y)
+        } else {
+            nil
+        }
     }
-    for i in 1...5 {
-        "\(i)"
+    
+    let component = _value.map { (x, y) in
+        let component0 = String.buildExpression("(\(x),\(y))")
+        return String.buildBlock(component0)
     }
 }
 
-print(body())
+@_ResultBuilder<String>()
+func transform() -> String {
+    "hello"
+    let a = 5
+    for index in 1...5 {
+        "\(index)"
+    }
+}
+
+print(transform())

@@ -5,6 +5,7 @@ import SwiftCompilerPlugin
 struct ResultBuilderMacroPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         ResultBuilderMacro.self,
+        TransformBodyMacro.self,
     ]
 }
 

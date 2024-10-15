@@ -12,7 +12,7 @@ public struct ResultBuilderMacro: BodyMacro {
         
         if let statements = declaration.body?.statements {
             var body: [CodeBlockItemSyntax] = []
-            let component: DeclSyntax = "let $component = { \(CodeBlockItemListSyntax { transformBlock(statements) }) }()"
+            let component: DeclSyntax = "let $component = { \(transformBlock(statements)) }()"
             body.append(component)
             let finalResult: ExprSyntax = "return \(raw: builder).buildFinalResult($component)"
             body.append(finalResult)
@@ -30,14 +30,14 @@ public struct ResultBuilderMacro: BodyMacro {
             let _first = expression.body.statements
             
             guard let _second = Syntax(expression.elseBody)?.as(CodeBlockSyntax.self)?.statements else {
-                let component: DeclSyntax = "let $component = { \(CodeBlockItemListSyntax { transformBlock(_first) }) }()"
+                let component: DeclSyntax = "let $component = { \(transformBlock(_first)) }()"
                 body.append(component)
                 let binding: DeclSyntax = "let $builder = \(raw: builder).buildOptional($component)"
                 body.append(binding)
                 return body
             }
-            let firstExpr: DeclSyntax = "let $first = { \(CodeBlockItemListSyntax { transformBlock(_first) }) }()"
-            let secondExpr: DeclSyntax = "let $second = { \(CodeBlockItemListSyntax { transformBlock(_second) }) }()"
+            let firstExpr: DeclSyntax = "let $first = { \(transformBlock(_first)) }()"
+            let secondExpr: DeclSyntax = "let $second = { \(transformBlock(_second)) }()"
             
             body.append(firstExpr)
             body.append(secondExpr)
@@ -56,13 +56,13 @@ public struct ResultBuilderMacro: BodyMacro {
             
             var body: [CodeBlockItemSyntax] = []
             
-            let identifer = "$case"
-            let binding: DeclSyntax = "var \(raw: identifer) = 0"
-            body.append(.init(item: .decl(binding)))
+            let binding: DeclSyntax = "var $case: Int"
+            
+            body.append(binding)
             
             var _cases: SwitchCaseListSyntax = []
             
-            var builders: [DeclSyntax] = []
+            var components: [DeclSyntax] = []
             
             var expressions: [DeclSyntax] = []
             
@@ -79,22 +79,20 @@ public struct ResultBuilderMacro: BodyMacro {
                     
                     _cases.append(.switchCase(SwitchCaseSyntax(label: original.label, statements: statements)))
                     
-                    let name = "$case\(index)_expr"
-                    
-                    let _stms = transformBlock(original.statements)
-                    
-                    let expression: DeclSyntax = "let \(raw: name) = { \(CodeBlockItemListSyntax { _stms }) }()"
+                    let name = "$expression\(index)"
+                                        
+                    let expression: DeclSyntax = "let \(raw: name) = { \(transformBlock(original.statements)) }()"
                     
                     expressions.append(expression)
                     
                     if index == 0 {
-                        let binding: DeclSyntax = "let $b\(raw: index) = \(raw: name)"
-                        builders.append(binding)
+                        let component: DeclSyntax = "let $component\(raw: index) = \(raw: name)"
+                        components.append(component)
                     } else {
                         let first = "\(builder).buildEither(first: \(name))"
-                        let second = "\(builder).buildEither(second: $b\(index - 1))"
-                        let binding: DeclSyntax =  "let $b\(raw: index) = $case >= \(raw: index) ? \(raw: first) : \(raw: second)"
-                        builders.append(binding)
+                        let second = "\(builder).buildEither(second: $component\(index - 1))"
+                        let component: DeclSyntax =  "let $component\(raw: index) = $case >= \(raw: index) ? \(raw: first) : \(raw: second)"
+                        components.append(component)
                     }
                     
                 case .ifConfigDecl:
@@ -105,14 +103,16 @@ public struct ResultBuilderMacro: BodyMacro {
             
             let _expr = SwitchExprSyntax(subject: expression.subject.with(\.leadingTrivia, .space), cases: _cases)
             
-            body.append(.init(item: .init(_expr.with(\.leadingTrivia, .newline))))
+            body.append(_expr.with(\.leadingTrivia, .newline))
+            body.append(_expr.with(\.leadingTrivia, .newline))
+
             
             for expression in expressions {
-                body.append(.init(item: .decl(expression.with(\.leadingTrivia, .newline))))
+                body.append(expression.with(\.leadingTrivia, .newline))
             }
             
-            for builder in builders {
-                body.append(.init(item: .decl(builder.with(\.leadingTrivia, .newline))))
+            for builder in components {
+                body.append(builder.with(\.leadingTrivia, .newline))
             }
             
             return body
@@ -131,7 +131,7 @@ public struct ResultBuilderMacro: BodyMacro {
             let components: DeclSyntax = "let $components = $sequence.map \(body.trimmed)"
             items.append(components)
 
-            let binding: DeclSyntax = "let $builder = \(raw: builder).buildArray($components)"
+            let binding: DeclSyntax = "let $component = \(raw: builder).buildArray($components)"
             items.append(binding)
             
             return items
@@ -199,12 +199,4 @@ public struct ResultBuilderMacro: BodyMacro {
         
     }
     
-}
-
-fileprivate extension [CodeBlockItemSyntax] {
-    mutating func append(_ node: some SyntaxProtocol) {
-        if let item = CodeBlockItemSyntax.Item(node.with(\.leadingTrivia, .newline)) {
-            self.append(.init(item: item))
-        }
-    }
 }

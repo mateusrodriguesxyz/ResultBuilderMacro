@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder:ResultBuilderMacro}",
+            "name": "Debug ResultBuilderMacroClient",
+            "program": "${workspaceFolder:ResultBuilderMacro}/.build/debug/ResultBuilderMacroClient",
+            "preLaunchTask": "swift: Build Debug ResultBuilderMacroClient"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder:ResultBuilderMacro}",
+            "name": "Release ResultBuilderMacroClient",
+            "program": "${workspaceFolder:ResultBuilderMacro}/.build/release/ResultBuilderMacroClient",
+            "preLaunchTask": "swift: Build Release ResultBuilderMacroClient"
+        }
+    ]
+}
